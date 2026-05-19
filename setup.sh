@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # setup.sh — GHOST 2.0 face-swap API
-# Designed for: pytorch/pytorch:2.4.1-cuda12.4-cudnn9-devel (Vast.ai / Docker)
-# torch + nvcc are pre-installed in that image — we just add the rest.
+# Works locally (conda ghost2 env activated) and in Docker
+# (pytorch/pytorch:2.4.1-cuda12.4-cudnn9-devel).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,16 +18,24 @@ export PYTHONNOUSERSITE=1
 python --version || error "python not found"
 pip --version    || error "pip not found"
 
-TORCH_CUDA=$(python -c "import torch; print(torch.version.cuda)" 2>/dev/null || echo "")
-if [ -z "$TORCH_CUDA" ]; then
-    error "torch not found — use Docker image pytorch/pytorch:2.4.1-cuda12.4-cudnn9-devel"
+# ── 1. PyTorch (install if missing, skip if already present e.g. Docker image) ─
+if ! python -c "import torch" 2>/dev/null; then
+    info "torch not found — installing..."
+    TORCH_INDEX="https://download.pytorch.org/whl/cpu"
+    if command -v nvidia-smi &>/dev/null; then
+        CUDA_MAJOR=$(nvidia-smi 2>/dev/null | grep -oP "CUDA Version: \K\d+" || echo "")
+        if   [[ "${CUDA_MAJOR:-0}" -ge 12 ]]; then TORCH_INDEX="https://download.pytorch.org/whl/cu124"
+        elif [[ "${CUDA_MAJOR:-0}" -ge 11 ]]; then TORCH_INDEX="https://download.pytorch.org/whl/cu118"
+        fi
+        info "CUDA ${CUDA_MAJOR} detected → $TORCH_INDEX"
+    fi
+    pip install torch torchvision --index-url "$TORCH_INDEX"
+else
+    TORCH_CUDA=$(python -c "import torch; print(torch.version.cuda)")
+    info "torch already installed (CUDA $TORCH_CUDA) — skipping."
 fi
-info "torch CUDA: $TORCH_CUDA"
 
-NVCC_PATH=$(which nvcc 2>/dev/null || echo "")
-[ -n "$NVCC_PATH" ] && info "nvcc: $NVCC_PATH" || warn "nvcc not found — pytorch3d build will fail"
-
-# ── 1. Clone GHOST 2.0 ────────────────────────────────────────────────────────
+# ── 2. Clone GHOST 2.0 ────────────────────────────────────────────────────────
 info "Cloning GHOST 2.0..."
 if [ ! -d "ghost" ]; then
     git clone https://github.com/ai-forever/ghost-2.0.git ghost
@@ -35,7 +43,7 @@ else
     info "ghost/ already present, skipping."
 fi
 
-# ── 2. Clone external repos ───────────────────────────────────────────────────
+# ── 3. Clone external repos ───────────────────────────────────────────────────
 info "Cloning external repos into ghost/repos/..."
 mkdir -p ghost/repos
 
@@ -54,21 +62,21 @@ clone_repo https://github.com/radekd91/emoca.git                emoca
 clone_repo https://github.com/hollance/BlazeFace-PyTorch.git    BlazeFace-PyTorch
 clone_repo https://github.com/chroneus/stylematte.git           stylematte
 
-# ── 3. face-alignment, facenet_pytorch ───────────────────────────────────────
+# ── 4. face-alignment, facenet_pytorch ───────────────────────────────────────
 info "Installing face-alignment and facenet_pytorch..."
-pip install face-alignment facenet_pytorch
+pip install --no-cache-dir face-alignment facenet_pytorch
 
 # ── 5. GHOST 2.0 requirements ────────────────────────────────────────────────
 info "Installing GHOST 2.0 requirements..."
-pip install -r ghost/requirements.txt
+pip install --no-cache-dir -r ghost/requirements.txt
 
 # numpy must be pinned AFTER everything else
 info "Pinning numpy<2 (GHOST 2.0 compatibility)..."
-pip install "numpy<2"
+pip install --no-cache-dir "numpy<2"
 
 # ── 6. API server ─────────────────────────────────────────────────────────────
 info "Installing API server dependencies..."
-pip install \
+pip install --no-cache-dir \
     "fastapi>=0.100.0" \
     "uvicorn[standard]>=0.23.0" \
     "python-multipart>=0.0.6" \
@@ -83,7 +91,7 @@ dl() {
     if [ ! -f "$dest" ]; then
         info "  Downloading $(basename "$dest")..."
         mkdir -p "$(dirname "$dest")"
-        curl -L --progress-bar -o "$dest" "$url"
+        curl -L --insecure --progress-bar -o "$dest" "$url"
     else
         info "  $(basename "$dest") already present, skipping."
     fi
@@ -98,7 +106,7 @@ dl ghost/weights/segformer_B5_ce.onnx                      "$BASE_URL/segformer_
 GAZE_DIR="ghost/src/losses/gaze_models"
 if [ ! -d "$GAZE_DIR" ] || [ -z "$(ls -A "$GAZE_DIR" 2>/dev/null)" ]; then
     info "  Downloading gaze_models.zip..."
-    curl -L --progress-bar -o /tmp/gaze_models.zip "$BASE_URL/gaze_models.zip"
+    curl -L --insecure --progress-bar -o /tmp/gaze_models.zip "$BASE_URL/gaze_models.zip"
     mkdir -p "$GAZE_DIR"
     unzip -q /tmp/gaze_models.zip -d "$GAZE_DIR"
     rm /tmp/gaze_models.zip
