@@ -68,6 +68,9 @@ pip install --no-cache-dir face-alignment facenet_pytorch
 
 # ── 5. GHOST 2.0 requirements ────────────────────────────────────────────────
 info "Installing GHOST 2.0 requirements..."
+# chumpy==0.70 has a broken setup.py that imports `pip` as a module (removed in
+# modern pip). Install it first with --no-build-isolation to bypass the issue.
+pip install --no-cache-dir --no-build-isolation chumpy
 pip install --no-cache-dir -r ghost/requirements.txt
 
 # numpy must be pinned AFTER everything else
