@@ -54,14 +54,7 @@ clone_repo https://github.com/radekd91/emoca.git                emoca
 clone_repo https://github.com/hollance/BlazeFace-PyTorch.git    BlazeFace-PyTorch
 clone_repo https://github.com/chroneus/stylematte.git           stylematte
 
-# ── 3. pytorch3d ──────────────────────────────────────────────────────────────
-info "Installing pytorch3d..."
-pip install "git+https://github.com/facebookresearch/fvcore"
-# --no-build-isolation: build sees the already-installed torch
-pip install --no-build-isolation "git+https://github.com/facebookresearch/pytorch3d.git" \
-    || warn "pytorch3d install failed — some features may not work."
-
-# ── 4. face-alignment, facenet_pytorch ───────────────────────────────────────
+# ── 3. face-alignment, facenet_pytorch ───────────────────────────────────────
 info "Installing face-alignment and facenet_pytorch..."
 pip install face-alignment facenet_pytorch
 
