@@ -67,6 +67,12 @@ class FaceSwapService:
                 "--save_path", str(result_path),
             ]
 
+            env = {
+                **__import__("os").environ,
+                "PYTHONNOUSERSITE": "1",
+                "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
+                "ORT_LOGGING_LEVEL": "3",  # suppress onnxruntime CUDA warnings
+            }
             log.info("Running GHOST 2.0 inference...")
             proc = subprocess.run(
                 cmd,
@@ -74,6 +80,7 @@ class FaceSwapService:
                 capture_output=True,
                 text=True,
                 timeout=300,
+                env=env,
             )
 
             if proc.returncode != 0:
