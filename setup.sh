@@ -120,7 +120,8 @@ if [ ! -d "$GAZE_DIR" ] || [ -z "$(ls -A "$GAZE_DIR" 2>/dev/null)" ]; then
     info "  Downloading gaze_models.zip..."
     curl -L --insecure --progress-bar -o /tmp/gaze_models.zip "$BASE_URL/gaze_models.zip"
     mkdir -p "$GAZE_DIR"
-    unzip -q /tmp/gaze_models.zip -d "$GAZE_DIR"
+    # Use -j to junk directory paths so files land directly in GAZE_DIR
+    unzip -q -j /tmp/gaze_models.zip -d "$GAZE_DIR"
     rm /tmp/gaze_models.zip
 else
     info "  gaze_models already present, skipping."
