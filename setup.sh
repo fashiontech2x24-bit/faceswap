@@ -62,6 +62,9 @@ clone_repo https://github.com/radekd91/emoca.git                emoca
 clone_repo https://github.com/hollance/BlazeFace-PyTorch.git    BlazeFace-PyTorch
 clone_repo https://github.com/chroneus/stylematte.git           stylematte
 
+# BlazeFace-PyTorch has a hyphen — Python can't import it as-is; create underscore alias
+ln -sf BlazeFace-PyTorch ghost/repos/BlazeFace_PyTorch
+
 # ── 4. face-alignment, facenet_pytorch ───────────────────────────────────────
 info "Installing face-alignment and facenet_pytorch..."
 pip install --no-cache-dir face-alignment facenet_pytorch
