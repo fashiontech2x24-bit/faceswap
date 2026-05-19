@@ -65,9 +65,9 @@ clone_repo https://github.com/chroneus/stylematte.git           stylematte
 # BlazeFace-PyTorch has a hyphen — Python can't import it as-is; create underscore alias
 ln -sf BlazeFace-PyTorch ghost/repos/BlazeFace_PyTorch
 
-# ── 4. face-alignment, facenet_pytorch ───────────────────────────────────────
-info "Installing face-alignment and facenet_pytorch..."
-pip install --no-cache-dir face-alignment facenet_pytorch
+# ── 4. face-alignment, facenet_pytorch, onnxruntime-gpu ──────────────────────
+info "Installing face-alignment, facenet_pytorch, onnxruntime-gpu..."
+pip install --no-cache-dir face-alignment facenet_pytorch onnxruntime-gpu
 
 # ── 5. GHOST 2.0 requirements ────────────────────────────────────────────────
 info "Installing GHOST 2.0 requirements..."
@@ -109,6 +109,8 @@ dl() {
     fi
 }
 
+dl ghost/repos/stylematte/stylematte/checkpoints/stylematte_synth.pth \
+   "https://github.com/chroneus/stylematte/releases/download/weights/stylematte_synth.pth"
 dl ghost/aligner_checkpoints/aligner_1020_gaze_final.ckpt  "$BASE_URL/aligner_1020_gaze_final.ckpt"
 dl ghost/blender_checkpoints/blender_lama.ckpt             "$BASE_URL/blender_lama.ckpt"
 dl ghost/weights/backbone50_1.pth                          "$BASE_URL/backbone50_1.pth"
