@@ -68,10 +68,16 @@ pip install --no-cache-dir face-alignment facenet_pytorch
 
 # ── 5. GHOST 2.0 requirements ────────────────────────────────────────────────
 info "Installing GHOST 2.0 requirements..."
-# chumpy==0.70 has a broken setup.py that imports `pip` as a module (removed in
-# modern pip). Install it first with --no-build-isolation to bypass the issue.
+# chumpy==0.70: broken setup.py imports `pip` as a module — bypass with --no-build-isolation.
 pip install --no-cache-dir --no-build-isolation chumpy
-pip install --no-cache-dir -r ghost/requirements.txt
+
+# simple-lama-inpainting==0.1.2: declares pillow<10 but works fine with 10+;
+# pin conflicts with scikit-image>=0.25 which needs pillow>=10.1. Install --no-deps.
+pip install --no-cache-dir --no-deps simple-lama-inpainting
+
+# Install the rest, excluding the two packages handled above.
+grep -v "^chumpy\|^simple-lama-inpainting" ghost/requirements.txt \
+    | pip install --no-cache-dir -r /dev/stdin
 
 # numpy must be pinned AFTER everything else
 info "Pinning numpy<2 (GHOST 2.0 compatibility)..."
